@@ -9,8 +9,7 @@ const { ChatOpenAI } = require("langchain/chat_models/openai")
 const { PromptTemplate } = require("langchain/prompts")
 const { StringOutputParser } = require("langchain/schema/output_parser")
 const { RunnablePassthrough, RunnableSequence } = require("langchain/schema/runnable");
-
-require('dotenv').config()
+require('dotenv').config({ path: '../.env' }) // Thay '../.env' bằng đường dẫn đúng đến file .env của bạn
 
 // const logOutput = async () => {
 //     const loader = new PDFLoader('../pdf/FTU.pdf');
@@ -38,16 +37,16 @@ const uploadToSupabase = async () => {
 
         const output = await splitter.createDocuments([text]);
 
-        const sbApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cW5zdnFiaXFsaXlpa3ptcm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI2MTI0NTAsImV4cCI6MjAxODE4ODQ1MH0.zCHbFwGSHSB_ntWJ6ny4SUYGz_sf_s_2UyqCaBBaNeo"
-        const sbUrl = "https://buqnsvqbiqliyikzmrnm.supabase.co"
-        const openaiApiKey = "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"
+        const sbApiKey = process.env.SUPABASE_API_KEY
+        const sbUrl = process.env.SUPABASE_URL_LC_CHATBOT
+        const openAIApiKey = process.env.OPENAI_API_KEY
 
         const client = createClient(sbUrl, sbApiKey)
 
         await SupabaseVectorStore.fromDocuments(
             output,
             new OpenAIEmbeddings({
-                openAIApiKey: openaiApiKey
+                openAIApiKey
             }),
             {
                 client,
@@ -59,9 +58,9 @@ const uploadToSupabase = async () => {
     }
 }
 const createRetrieval = () => {
-    const sbApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cW5zdnFiaXFsaXlpa3ptcm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI2MTI0NTAsImV4cCI6MjAxODE4ODQ1MH0.zCHbFwGSHSB_ntWJ6ny4SUYGz_sf_s_2UyqCaBBaNeo"
-    const sbUrl = "https://buqnsvqbiqliyikzmrnm.supabase.co"
-    const openAIApiKey = "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"
+    const sbApiKey = process.env.SUPABASE_API_KEY
+    const sbUrl = process.env.SUPABASE_URL_LC_CHATBOT
+    const openAIApiKey = process.env.OPENAI_API_KEY
     const client = createClient(sbUrl, sbApiKey)
     const embeddings = new OpenAIEmbeddings({ openAIApiKey })
     const vectorStore = new SupabaseVectorStore(embeddings, {
@@ -80,7 +79,7 @@ const combineDocuments = (docs) => {
 
 const responseAI = async (req, res) => {
     try {
-        const openAIApiKey = "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"
+        const openAIApiKey = process.env.OPENAI_API_KEY
         const llm = new ChatOpenAI({ openAIApiKey })
         const retriever = createRetrieval()
         const standaloneQuestionTemplate = `Given a question, convert it to a standalone question and translate into Vietnamese.
@@ -123,6 +122,8 @@ const responseAI = async (req, res) => {
         res.status(500).send(error);
     }
 }
+
+console.log(process.env.PORT);
 
 module.exports = {
     responseAI
