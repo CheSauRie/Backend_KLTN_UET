@@ -77,20 +77,34 @@ const combineDocuments = (docs) => {
     return docs.map((doc) => doc.pageContent).join('\n\n')
 }
 
+const formatConvHistory = (messages) => {
+    return messages.map((message, i) => {
+        if (i % 2 === 0) {
+            return `Human: ${message}`
+        } else {
+            return `AI: ${message}`
+        }
+    }).join('\n')
+}
+const convHistory = []
 const responseAI = async (req, res) => {
     try {
         const openAIApiKey = process.env.OPENAI_API_KEY
-        const llm = new ChatOpenAI({ openAIApiKey })
+        const llm = new ChatOpenAI({ openAIApiKey, modelName: "gpt-4-1106-preview" })
         const retriever = createRetrieval()
-        const standaloneQuestionTemplate = `Given a question, convert it to a standalone question and translate into Vietnamese.
-    question: {question} standalone question:
+        const standaloneQuestionTemplate = `Given some conversation history (if any) and a question, convert the question to a standalone question and translate into Vietnamese.
+        conversation history: {conv_history}
+        question: {question} 
+        standalone question:
     `
-        const answerTemplate = `As a highly knowledgeable and experienced college admissions counselor, your goal is to provide guidance and support to high school students navigating the college admissions process. You will answer their questions, address their concerns, and offer expert advice tailored to their specific needs and circumstances. To receive questions or concerns from high school students, they will provide them in Vietnamese. You are to reply with detailed and informative answers in Vietnamese without processing the original question or concern.
-    It's more important to be accurate than complete. If you can't give a reliable answer and the question or concern is not related to your field, please say 'I don't know.'
-    Translate the answer to Vietnamese
-    Context: {context}
-    Question: {question}
-    answer:
+        const answerTemplate = `As a highly knowledgeable and experienced college admissions counselor, your goal is to provide guidance and support to high school students navigating the college admissions process. You will answer their questions, address their concerns, and offer expert advice tailored to their specific needs and circumstances. To receive questions or concerns from high school students, they will provide them in Vietnamese. You are to reply with detailed and informative answers based on context provided and the conversation history in Vietnamese without processing the original question or concern.
+        Try to find the answer in the context. If the answer is not given in the context, find the answer in the conversation history if possible.
+        It's more important to be accurate than complete. If you can't give a reliable answer and the question or concern is not related to your field, please say 'I don't know.'
+        Translate the answer to Vietnamese
+        Context: {context}
+        Conversation history: {conv_history}
+        Question: {question}
+        answer:
     `
         const answerPrompt = PromptTemplate.fromTemplate(answerTemplate)
         const standaloneQuestionPrompt = PromptTemplate.fromTemplate(standaloneQuestionTemplate)
@@ -109,21 +123,25 @@ const responseAI = async (req, res) => {
             },
             {
                 context: retrieverChain,
-                question: ({ original_input }) => original_input.question
+                question: ({ original_input }) => original_input.question,
+                conv_history: ({ original_input }) => original_input.conv_history
             },
             answerChain
         ])
         const { question } = req.body
         const response = await chain.invoke({
-            question: question
+            question: question,
+            conv_history: formatConvHistory(convHistory)
         })
+
+        convHistory.push(question)
+        convHistory.push(response)
+
         res.status(201).send(response)
     } catch (error) {
         res.status(500).send(error);
     }
 }
-
-console.log(process.env.PORT);
 
 module.exports = {
     responseAI
