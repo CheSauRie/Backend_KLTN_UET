@@ -90,7 +90,7 @@ const getDetailMessage = async (req, res) => {
     }
 }
 
-//Lấy lịch sử đoạn chat cho vào prompt, lấy 5 đoạn gần nhất
+//Lấy lịch sử đoạn chat cho vào prompt, lấy 5 đoạn gần nhất không phải controller
 const getMessageHistory = async (chat_id) => {
     try {
         const messages = await Message.findAll({

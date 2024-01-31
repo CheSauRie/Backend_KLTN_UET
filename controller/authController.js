@@ -41,7 +41,7 @@ const register = async (req, res) => {
 
             const emailVerificationToken = jwt.sign(
                 { userId: user.user_id },
-                "anhquan1",
+                process.env.JWT_SECRET,
                 { expiresIn: '24h' }
             );
 
@@ -67,7 +67,7 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Incorrect email or password" });
         }
 
-        const token = jwt.sign({ id: user.user_id }, 'anhquan1', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.json({ message: "Login successful", token, userName: user.username, user_id: user.user_id });
     } catch (error) {
@@ -79,7 +79,7 @@ const login = async (req, res) => {
 const emailVerify = async (req, res) => {
     try {
         const { token } = req.query;
-        const decoded = jwt.verify(token, "anhquan1");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findByPk(decoded.userId);
 
         if (!user) return res.status(400).send('Invalid token.');
@@ -104,7 +104,7 @@ const requestPasswordReset = async (req, res) => {
             return res.status(404).send("Không tìm thấy người dùng với email này.");
         }
 
-        const resetToken = jwt.sign({ userId: user.user_id }, 'anhquan1', { expiresIn: '1h' });
+        const resetToken = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Lưu token đặt lại mật khẩu vào cơ sở dữ liệu hoặc bảng tạm thời
         user.emailVerificationToken = resetToken;
@@ -137,7 +137,7 @@ const requestPasswordReset = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         const { token, newPassword } = req.body;
-        const decoded = jwt.verify(token, "anhquan1");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findByPk(decoded.userId);
 
         if (!user || user.emailVerificationToken !== token) {
