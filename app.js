@@ -6,6 +6,11 @@ const { rootRouter } = require("./routes/router")
 const { connectDB } = require("./config/connectDB")
 require('dotenv').config()
 
+
+const path = require('path');
+
+// Phục vụ các file tĩnh từ thư mục 'uploads'
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({
     extended: true,

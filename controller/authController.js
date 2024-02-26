@@ -50,7 +50,7 @@ const register = async (req, res) => {
 
             // Gửi email xác minh
             sendVerificationEmail(user, emailVerificationToken);
-            res.status(201).send('User registered successfully. Please check your email to verify.');
+            res.status(201).json('User registered successfully. Please check your email to verify.');
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -67,9 +67,9 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Incorrect email or password" });
         }
 
-        const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({ message: "Login successful", token, userName: user.username, user_id: user.user_id });
+        res.json({ message: "Login successful", token, userName: user.username, user_id: user.user_id, role: user.role });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

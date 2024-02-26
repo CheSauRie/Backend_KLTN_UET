@@ -8,7 +8,7 @@ chatRouter.get('/get-chat', verifyToken, getChat)
 chatRouter.post("/create-chat", verifyToken, createChat)
 chatRouter.delete('/delete-chat', verifyToken, deleteChat)
 chatRouter.get('/detail-message', getDetailMessage)
-chatRouter.post('/create-message', createMessage)
+chatRouter.post('/create-message', verifyToken, createMessage)
 module.exports = {
     chatRouter
 };

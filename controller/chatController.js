@@ -43,7 +43,7 @@ const createChat = async (req, res) => {
         const response = await summaryQuestion(question)
         const summary = response.content;
         const newChat = await Chat.create({ user_id: id, summary: summary });
-        res.status(201).send(summary);
+        res.status(201).json(newChat);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -53,7 +53,7 @@ const createChat = async (req, res) => {
 const deleteChat = async (req, res) => {
     try {
         const { id } = req.user; // decoded token lấy được user_id
-        const { chat_id } = req.body;
+        const { chat_id } = req.query;
 
         await Chat.destroy({
             where: {
@@ -75,7 +75,7 @@ const deleteChat = async (req, res) => {
 //Lấy cuộc trò chuyện tương ứng: input chat_id, có thể thêm user_id để đảm bảo an toàn, lấy toàn bộ đoạn chat
 const getDetailMessage = async (req, res) => {
     try {
-        const { chat_id } = req.body;
+        const { chat_id } = req.query;
         const messages = await Message.findAll({
             where: { chat_id: chat_id },
         });
@@ -128,8 +128,8 @@ const createMessage = async (req, res) => {
         // Tạo Answer từ hàm response AI
         const answer = await responseAI(question, convHistory);
         // Lưu vào trong db
-        const newMessage = await Message.create({ chat_id: chat_id, question: summary, answer: answer });
-        res.status(201).send(answer);
+        const newMessage = await Message.create({ chat_id: chat_id, question: question, answer: answer, summary: summary });
+        res.status(201).json(newMessage);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
