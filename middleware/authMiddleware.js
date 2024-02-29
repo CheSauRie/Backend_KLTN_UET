@@ -15,4 +15,18 @@ const verifyToken = (req, res, next) => {
     return next();
 };
 
-module.exports = { verifyToken };
+const optionalVerifyToken = (req, res, next) => {
+    const token = req.header("token");
+    if (!token) {
+        return next();
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+    } catch (err) {
+        // Nếu token không hợp lệ, vẫn cho tiếp tục nhưng không set req.user
+    }
+    next();
+};
+
+module.exports = { verifyToken, optionalVerifyToken };

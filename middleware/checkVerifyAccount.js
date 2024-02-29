@@ -1,9 +1,5 @@
-/**
- *  Kiểm tra user đã được verify chưa kiểm tra trường isVerified trong csdl
- * */
-
 const jwt = require('jsonwebtoken');
-const { User } = require('../models'); // Đường dẫn đến file model User của bạn
+const { User } = require('../models');
 require('dotenv').config({ path: '../.env' })
 const checkIsVerified = async (req, res, next) => {
     const token = req.header("token");
