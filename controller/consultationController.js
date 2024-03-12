@@ -1,4 +1,4 @@
-const { Consultation, User, Major, University } = require('../models');
+const { Consultation_Schedule, User, Major, University, ConsultationRequest } = require('../models');
 const nodemailer = require('nodemailer');
 require('dotenv').config({ path: '../.env' })
 
@@ -14,14 +14,14 @@ function getConfiguredOAuth2Client() {
     );
 
     oAuth2Client.setCredentials({
-        refresh_token: "1//0erBYcWrHx6H6CgYIARAAGA4SNwF-L9IrfJPYZXrlUbZqhQRKNuMoUN7K3O3znBTW57Pap5VuD2i41TKzT2expu7MijEuoaiZf_0",
+        refresh_token: "1//0ePUjkuW5PEEDCgYIARAAGA4SNwF-L9IrUK_NTuXHFER9_nA1-DuKk0b6PiDsifZXerxXXHsmgOXoL4Vp7LgpmZlL3nzO-KZTVnA",
     });
     return oAuth2Client;
 }
 
 const oAuth2Client = getConfiguredOAuth2Client();
 const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-async function createGoogleMeet(startMeeting, endMeeting, consultation_email) {
+async function createGoogleMeet(startMeeting, endMeeting) {
     const event = {
         summary: 'Cuộc họp tư vấn',
         description: 'Cuộc họp tư vấn cho sinh viên.',
@@ -33,10 +33,10 @@ async function createGoogleMeet(startMeeting, endMeeting, consultation_email) {
             dateTime: endMeeting, // ISO string e.g., "2024-02-27T10:00:00-07:00"
             timeZone: 'Asia/Ho_Chi_Minh',
         },
-        attendees: [
-            { email: process.env.EMAIL_USERNAME },
-            { email: consultation_email },
-        ],
+        // attendees: [
+        //     { email: process.env.EMAIL_USERNAME },
+        //     { email: consultation_email },
+        // ],
         conferenceData: {
             createRequest: { requestId: "sample123", conferenceSolutionKey: { type: "hangoutsMeet" } }
         },
@@ -55,35 +55,79 @@ async function createGoogleMeet(startMeeting, endMeeting, consultation_email) {
         throw error; // Hoặc xử lý lỗi theo cách khác
     }
 }
+// Hàm cập nhật trạng thái tư vấn và thông báo
+// const updateConsultationStatusAndNotify = async (req, res) => {
+//     const { consultation_id, start_meeting, end_meeting } = req.body;
 
-const updateConsultationStatusAndNotify = async (req, res) => {
-    const { consultation_id, start_meeting, end_meeting } = req.body;
+//     try {
+//         // Cập nhật trạng thái tư vấn
+//         const consultation = await Consultation.findByPk(consultation_id);
+//         if (!consultation) {
+//             return res.status(404).send("Consultation not found.");
+//         }
+//         // Gửi email thông báo
+//         const consultationEmail = consultation.consultation_email;
+//         const consultationName = consultation.consultation_name;
+//         // Tạo cuộc họp Google Meet
+//         const meetUrl = await createGoogleMeet(start_meeting, end_meeting, consultationEmail);
+//         await sendConsultationMeetingEmail(consultationEmail, consultationName, meetUrl);
+//         consultation.status = 1;
+//         consultation.consultation_time = start_meeting;
+//         consultation.meet_url = meetUrl;
+//         await consultation.save()
 
-    try {
-        // Cập nhật trạng thái tư vấn
-        const consultation = await Consultation.findByPk(consultation_id);
-        if (!consultation) {
-            return res.status(404).send("Consultation not found.");
-        }
-        // Gửi email thông báo
-        const consultationEmail = consultation.consultation_email;
-        const consultationName = consultation.consultation_name;
-        // Tạo cuộc họp Google Meet
-        const meetUrl = await createGoogleMeet(start_meeting, end_meeting, consultationEmail);
-        await sendConsultationMeetingEmail(consultationEmail, consultationName, meetUrl);
-        consultation.status = 1;
-        consultation.consultation_time = start_meeting;
-        consultation.meet_url = meetUrl;
-        await consultation.save()
-        return res.status(200).json({
-            message: "Consultation status updated and notification sent.",
-            meetUrl: meetUrl
-        });
-    } catch (error) {
-        console.error("Error updating consultation status or sending notification:", error);
-        return res.status(500).send("An error occurred.");
-    }
-};
+//         return res.status(200).json({
+//             message: "Consultation status updated and notification sent.",
+//             meetUrl: meetUrl
+//         });
+//     } catch (error) {
+//         console.error("Error updating consultation status or sending notification:", error);
+//         return res.status(500).send("An error occurred.");
+//     }
+// };
+
+// const getConsultations = async (req, res) => {
+//     try {
+//         const consultations = await Consultation.findAll({
+//             include: [
+//                 {
+//                     model: Major,
+//                     attributes: ['major_name'],
+//                     include: [
+//                         {
+//                             model: University,
+//                             attributes: ['uni_name']
+//                         }
+//                     ]
+//                 }
+//             ],
+//             attributes: ['consultation_id', 'consulting_information', 'status', 'consultation_phone', 'consultation_email', 'consultation_name', 'meet_url', "consultation_time"],
+//         });
+
+//         if (!consultations) {
+//             return res.status(404).send("Consultations not found.");
+//         }
+//         const formattedConsultations = consultations.map(consultation => {
+//             return {
+//                 consultation_id: consultation.consultation_id,
+//                 consulting_information: consultation.consulting_information,
+//                 status: consultation.status,
+//                 consultation_phone: consultation.consultation_phone,
+//                 consultation_email: consultation.consultation_email,
+//                 consultation_name: consultation.consultation_name,
+//                 major_name: consultation.Major.major_name,
+//                 uni_name: consultation.Major.University.uni_name,
+//                 consultation_time: consultation.consultation_time,
+//                 meet_url: consultation.meet_url
+//             };
+//         });
+//         return res.status(200).json(formattedConsultations);
+//     } catch (error) {
+//         console.error("Failed to retrieve consultations:", error);
+//         return res.status(500).send("An error occurred while retrieving consultations.");
+//     }
+// };
+
 
 async function sendConsultationMeetingEmail(consultationEmail, consultationName, meetUrl) {
     const transporter = nodemailer.createTransport({
@@ -104,7 +148,7 @@ async function sendConsultationMeetingEmail(consultationEmail, consultationName,
     await transporter.sendMail(mailOptions);
 }
 
-const sendConsultationConfirmationEmail = async (consultationEmail, consultationName) => {
+const sendConsultationConfirmationEmail = async (consultationEmail, consultationName, timeConsulting, meetUrl, uniName, consulting_information) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -117,27 +161,32 @@ const sendConsultationConfirmationEmail = async (consultationEmail, consultation
         from: `"Hệ thống tư vấn tuyển sinh" <${process.env.EMAIL_USERNAME}>`,
         to: consultationEmail,
         subject: 'Xác nhận yêu cầu tư vấn',
-        text: `Xin chào ${consultationName},\n\nYêu cầu tư vấn của bạn đã được nhận. Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.\n\nTrân trọng,`
+        text: `Xin chào ${consultationName},\n\nYêu cầu tư vấn của bạn đã được nhận.
+        \nTrường: ${uniName} 
+        \nYêu cầu tư vấn của bạn: ${consulting_information}
+        \nThời gian tư vấn của bạn là: ${timeConsulting}
+        \nLink phòng họp: ${meetUrl}
+        \n\nTrân trọng,`
     });
 }
 
-const addConsultation = async (req, res) => {
-    // Dữ liệu từ request body
-    const { major_id, consulting_information } = req.body;
+//Người dùng thêm yêu cầu tư vấn
+const addConsultationRequest = async (req, res) => {
+    const { schedule_id, consulting_information } = req.body;
     let user_id = null;
-    let consultation_phone, consultation_email, consultation_name;
+    let user_phone, user_email, username;
 
     if (req.user) {
-        user_id = req.user.id; // Hoặc req.user.user_id tùy vào payload của token
+        user_id = req.user.id;
 
         // Truy vấn thông tin người dùng từ bảng Users
         try {
             const user = await User.findByPk(user_id);
             if (user) {
                 // Lấy thông tin từ bảng Users nếu người dùng đã đăng nhập
-                // consultation_phone = user.phone; // Giả sử trường thông tin điện thoại trong bảng User là phone
-                consultation_email = user.email;
-                consultation_name = user.username; // Hoặc bất kỳ trường nào khác bạn muốn sử dụng làm tên tư vấn
+                // user_phone = user.phone; // Giả sử trường thông tin điện thoại trong bảng User là phone
+                user_email = user.email;
+                username = user.username;
             }
         } catch (userError) {
             console.error("Failed to retrieve user information:", userError);
@@ -147,26 +196,37 @@ const addConsultation = async (req, res) => {
 
     // Nếu người dùng không đăng nhập, sử dụng thông tin từ request body
     if (!user_id) {
-        consultation_phone = req.body.consultation_phone || null;
-        consultation_email = req.body.consultation_email || null;
-        consultation_name = req.body.consultation_name || null;
+        user_phone = req.body.user_phone || null;
+        user_email = req.body.user_email || null;
+        username = req.body.username || null;
     }
 
     try {
-        const newConsultation = await Consultation.create({
-            major_id,
-            user_id, // Có thể là null nếu không đăng nhập
+        const newConsultation = await ConsultationRequest.create({
+            user_id,
+            schedule_id,
             consulting_information,
-            consultation_phone,
-            consultation_email,
-            consultation_name,
-            status: false, // Giả sử mặc định là false khi mới tạo
+            user_phone,
+            user_email,
+            username,
         });
-        sendConsultationConfirmationEmail(consultation_email, consultation_name).then(() => {
-            console.log('Email xác nhận đã được gửi.');
-        }).catch(error => {
-            console.error('Lỗi khi gửi email xác nhận:', error);
-        });
+        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+        if (schedule) {
+            const timeConsulting = schedule.consultation_time
+            const meetUrl = schedule.meet_url
+            const uni = await University.findByPk(schedule.uni_id)
+            const uniName = uni.uni_name
+            sendConsultationConfirmationEmail(user_email, username, timeConsulting, meetUrl, uniName, consulting_information).then(() => {
+                console.log('Email xác nhận đã được gửi.');
+            }).catch(error => {
+                console.error('Lỗi khi gửi email xác nhận:', error);
+            });
+        } else {
+            return res.status(404).json({
+                message: 'Cannot find schedule'
+            })
+        }
+
         return res.status(201).json({
             message: "Consultation request submitted successfully.",
             consultation: newConsultation
@@ -177,13 +237,16 @@ const addConsultation = async (req, res) => {
     }
 };
 
-const getConsultations = async (req, res) => {
+//Người dùng lấy danh sách tư vấn bằng user_id
+const getConsultationsByUserId = async (req, res) => {
+    const { id } = req.user
     try {
-        const consultations = await Consultation.findAll({
+        const consultations = await ConsultationRequest.findAll({
+            where: { user_id: id },
             include: [
                 {
-                    model: Major,
-                    attributes: ['major_name'],
+                    model: Consultation_Schedule,
+                    attributes: ['schedule_id', 'meet_url', 'consultation_time'],
                     include: [
                         {
                             model: University,
@@ -192,24 +255,21 @@ const getConsultations = async (req, res) => {
                     ]
                 }
             ],
-            attributes: ['consultation_id', 'consulting_information', 'status', 'consultation_phone', 'consultation_email', 'consultation_name', 'meet_url', "consultation_time"],
+            attributes: ['request_id', 'consulting_information', 'schedule_id'],
         });
-
         if (!consultations) {
             return res.status(404).send("Consultations not found.");
         }
         const formattedConsultations = consultations.map(consultation => {
             return {
-                consultation_id: consultation.consultation_id,
+                schedule_id: consultation.schedule_id,
                 consulting_information: consultation.consulting_information,
-                status: consultation.status,
-                consultation_phone: consultation.consultation_phone,
-                consultation_email: consultation.consultation_email,
-                consultation_name: consultation.consultation_name,
-                major_name: consultation.Major.major_name,
-                uni_name: consultation.Major.University.uni_name,
-                consultation_time: consultation.consultation_time,
-                meet_url: consultation.meet_url
+                consultation_phone: consultation.user_phone,
+                consultation_email: consultation.user_email,
+                consultation_name: consultation.user_name,
+                uni_name: consultation.Consultation_Schedule.University.uni_name,
+                consultation_time: consultation.Consultation_Schedule.consultation_time,
+                meet_url: consultation.Consultation_Schedule.meet_url
             };
         });
         return res.status(200).json(formattedConsultations);
@@ -217,11 +277,168 @@ const getConsultations = async (req, res) => {
         console.error("Failed to retrieve consultations:", error);
         return res.status(500).send("An error occurred while retrieving consultations.");
     }
+}
+
+// Admin thêm lịch tư vấn
+const addConsultationSchedule = async (req, res) => {
+    const { uni_id, consultation_time } = req.body;
+    try {
+        // Tìm email của trường đại học dựa trên uni_id
+        const university = await University.findByPk(uni_id);
+        if (!university) {
+            return res.status(404).send("University not found");
+        }
+
+        // Định dạng thời gian kết thúc cho cuộc họp (ví dụ: thêm 1 giờ)
+        const endTime = new Date(consultation_time);
+        endTime.setHours(endTime.getHours() + 1); // Thêm 1 giờ cho thời gian kết thúc
+
+        // Tạo cuộc họp Google Meet
+        const meetUrl = await createGoogleMeet(consultation_time, endTime.toISOString());
+
+        // Tạo mới một lịch tư vấn trong bảng consultation_schedules
+        const newSchedule = await Consultation_Schedule.create({
+            uni_id,
+            consultation_time,
+            meet_url: meetUrl
+        });
+
+        return res.status(201).json({
+            message: "Consultation schedule created successfully.",
+            schedule: newSchedule
+        });
+    } catch (error) {
+        console.error("Failed to create consultation schedule:", error);
+        return res.status(500).send("An error occurred while creating the consultation schedule.");
+    }
+};
+
+// Admin lấy toàn bộ lịch tư vấn
+const getConsultationSchedules = async (req, res) => {
+    try {
+        const consultationSchedules = await Consultation_Schedule.findAll({
+            include: [{
+                model: University,
+                attributes: ['uni_name'], // Lấy chỉ tên trường đại học
+            }],
+            attributes: ['schedule_id', 'uni_id', 'consultation_time', 'meet_url'], // Lấy các trường bạn cần từ consultation_schedules
+        });
+
+        if (!consultationSchedules) {
+            return res.status(404).send("No consultation schedules found.");
+        }
+        const formattedSchedules = consultationSchedules.map(schedule => ({
+            schedule_id: schedule.schedule_id,
+            uni_id: schedule.uni_id,
+            uni_name: schedule.University.uni_name,
+            consultation_time: schedule.consultation_time,
+            meet_url: schedule.meet_url,
+        }));
+        return res.status(200).json(formattedSchedules);
+    } catch (error) {
+        console.error("Failed to retrieve consultation schedules:", error);
+        return res.status(500).send("An error occurred while retrieving consultation schedules.");
+    }
+};
+
+// Admin lấy tư vấn bởi uni_code
+const getConsultationSchedulesByUniCode = async (req, res) => {
+    const { uni_code } = req.params;
+
+    try {
+        // Tìm trường đại học dựa trên uni_code
+        const university = await University.findOne({ where: { uni_code } });
+
+        if (!university) {
+            return res.status(404).send("University not found.");
+        }
+
+        // Tìm lịch tư vấn dựa trên uni_id
+        const consultationSchedules = await Consultation_Schedule.findAll({
+            where: { uni_id: university.uni_id },
+            include: [{
+                model: University,
+                attributes: ['uni_name', 'uni_code'], // Lấy tên và mã trường
+            }],
+            attributes: ['schedule_id', 'uni_id', 'consultation_time'], // Các thông tin cần lấy từ consultation_schedules
+        });
+
+        if (consultationSchedules.length === 0) {
+            return res.status(404).send("No consultation schedules found for the specified university.");
+        }
+        const formattedSchedules = consultationSchedules.map(schedule => ({
+            schedule_id: schedule.schedule_id,
+            uni_id: schedule.uni_id,
+            uni_name: schedule.University.uni_name,
+            uni_code: schedule.University.uni_code,
+            consultation_time: schedule.consultation_time,
+            meet_url: schedule.meet_url,
+        }));
+        return res.status(200).json(formattedSchedules);
+    } catch (error) {
+        console.error("Failed to retrieve consultation schedules:", error);
+        return res.status(500).send("An error occurred while retrieving consultation schedules.");
+    }
+};
+
+// Update lịch tư vấn admin
+const updateConsultationSchedule = async (req, res) => {
+    const { schedule_id } = req.params;
+    const { consultation_time, meet_url } = req.body;
+
+    try {
+        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+
+        if (!schedule) {
+            return res.status(404).send("Consultation schedule not found.");
+        }
+
+        // Cập nhật lịch tư vấn với thông tin mới
+        if (consultation_time) schedule.consultation_time = consultation_time;
+        if (meet_url) schedule.meet_url = meet_url;
+
+        await schedule.save(); // Lưu thay đổi
+
+        return res.status(200).json({
+            message: "Consultation schedule updated successfully.",
+            schedule: {
+                schedule_id: schedule.schedule_id,
+                uni_id: schedule.uni_id,
+                consultation_time: schedule.consultation_time,
+                meet_url: schedule.meet_url,
+            }
+        });
+    } catch (error) {
+        console.error("Failed to update consultation schedule:", error);
+        return res.status(500).send("An error occurred while updating the consultation schedule.");
+    }
+};
+
+// Xóa lịch tư vấn admin
+const deleteConsultationSchedule = async (req, res) => {
+    try {
+        const { schedule_id } = req.params;
+        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+
+        if (!schedule) {
+            return res.status(404).send({ message: "Schedule not found." });
+        }
+
+        await schedule.destroy();
+        return res.status(200).send({ message: "Schedule deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting schedule:", error);
+        return res.status(500).send({ message: "Error deleting schedule." });
+    }
 };
 
 
 module.exports = {
-    addConsultation,
-    getConsultations,
-    updateConsultationStatusAndNotify
+    addConsultationSchedule,
+    getConsultationSchedules,
+    getConsultationSchedulesByUniCode,
+    updateConsultationSchedule,
+    deleteConsultationSchedule,
+    getConsultationsByUserId,
+    addConsultationRequest
 }

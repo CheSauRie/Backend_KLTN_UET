@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Review.belongsTo(models.User, { foreignKey: 'user_id' });
       Review.belongsTo(models.Major, { foreignKey: 'major_id' });
+      Review.hasMany(models.Review, { foreignKey: 'parent_review_id' });
     }
   }
   Review.init({
@@ -22,8 +23,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     user_id: DataTypes.INTEGER,
     major_id: DataTypes.INTEGER,
-    pros: DataTypes.TEXT,
-    cons: DataTypes.TEXT
+    parent_review_id: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Review',
+        key: 'review_id'
+      }
+    },
+    content: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'Review',

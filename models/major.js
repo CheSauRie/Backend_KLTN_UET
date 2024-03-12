@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
       // Thiết lập liên kết với model University
       Major.belongsTo(models.University, { foreignKey: 'uni_id' });
       Major.hasMany(models.Review, { foreignKey: "major_id" })
-      Major.hasMany(models.Consultation, { foreignKey: 'major_id' })
     }
   };
   Major.init({

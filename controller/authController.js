@@ -155,11 +155,45 @@ const resetPassword = async (req, res) => {
     }
 };
 
+// Hàm thay đổi password
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (currentPassword === newPassword) {
+            return res.status(400).send({ message: "Mật khẩu mới không được trùng với mật khẩu hiện tại" });
+        }
+
+        const { id } = req.user;
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).send({ message: 'Không tìm thấy User.' });
+        }
+
+        // Verify the current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).send({ message: 'Mật khẩu hiện tại không đúng.' });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json('Thay đổi mật khẩu thành công.');
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
 
 module.exports = {
     register,
     login,
     emailVerify,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
+    changePassword
 }
