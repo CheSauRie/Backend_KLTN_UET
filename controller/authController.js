@@ -2,18 +2,19 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const nodemailer = require('nodemailer');
-require('dotenv').config({ path: '../.env' })
+require('dotenv').config()
+
 //Hàm gửi yêu cầu xác thực email
 const sendVerificationEmail = async (user, emailVerificationToken) => {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'hongquanvd1@gmail.com', // Địa chỉ email của bạn
-            pass: 'icly rjbv fpdp xgal'      // Mật khẩu ứng dụng của Gmail
+            user: process.env.EMAIL_USERNAME, // Địa chỉ email của bạn
+            pass: process.env.EMAIL_PASSWORD     // Mật khẩu ứng dụng của Gmail
         }
     });
 
-    const verificationUrl = `http://localhost:2000/api/v1/user/verify-email?token=${emailVerificationToken}`;
+    const verificationUrl = `${process.env.BASE_URL}api/v1/user/verify-email?token=${emailVerificationToken}`;
 
     await transporter.sendMail({
         from: '"Hệ thống tư vấn tuyển sinh" <hongquanvd1@gmail.com>',
@@ -62,9 +63,13 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ where: { email } });
-
+        console.log(user.isVerified);
         if (!user || !await bcrypt.compare(password, user.password)) {
-            return res.status(401).json({ message: "Incorrect email or password" });
+            return res.status(401).json({ message: "Tài khoản hoặc mật khẩu không đúng" });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).json({ message: "Tài khoản chưa được kích hoạt. Kiểm tra email của bạn" });
         }
 
         const token = jwt.sign({ id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -119,7 +124,7 @@ const requestPasswordReset = async (req, res) => {
         });
 
         // Gửi email
-        const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.REACT_URL}reset-password?token=${resetToken}`;
         await transporter.sendMail({
             from: '"Hệ thống tư vấn tuyển sinh" <hongquanvd1@gmail.com>',
             to: user.email,

@@ -10,7 +10,7 @@ const { PromptTemplate } = require("langchain/prompts")
 const { StringOutputParser } = require("langchain/schema/output_parser")
 const { RunnablePassthrough, RunnableSequence } = require("langchain/schema/runnable");
 const { Chat, Message } = require('../models');
-require('dotenv').config({ path: '../.env' })
+require('dotenv').config()
 
 /**
  * Các hàm dùng cho CRD các bảng Chat, Message

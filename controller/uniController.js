@@ -1,11 +1,22 @@
-const { University, MarkdownUni } = require('../models');
-require('dotenv').config({ path: '../.env' })
+const { University, MarkdownUni, Major } = require('../models');
+const { Sequelize } = require('sequelize');
+require('dotenv').config()
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Tạo mới university
 const createUniversity = async (req, res) => {
     const { uni_code, uni_name, address, phone, website, email, description, mission, admissions_criteria, admission_method, tution_fee, teaching_staff, dormitory, library } = req.body;
     const { logo, background } = req.files;
     try {
+        // Upload logo and background images to Cloudinary
+        const logoResult = await cloudinary.uploader.upload(logo[0].path);
+        const backgroundResult = await cloudinary.uploader.upload(background[0].path);
         // Lưu thông tin trường đại học
         const university = await University.create({
             uni_code,
@@ -27,8 +38,10 @@ const createUniversity = async (req, res) => {
             teaching_staff,
             dormitory,
             library,
-            logo: logo[0].path, // Lưu đường dẫn file
-            background: background[0].path // Lưu đường dẫn file
+            // logo: logo[0].path, // Lưu đường dẫn file
+            // background: background[0].path // Lưu đường dẫn file
+            logo: logoResult.url, // Lưu đường dẫn file
+            background: backgroundResult.url // Lưu đường dẫn file
         });
 
         res.status(201).json({ message: "University and related information successfully added", university, markdownUni });
@@ -115,10 +128,62 @@ const getUniversityDetail = async (req, res) => {
         res.status(500).json({ message: 'Error fetching university detail', error: error.message });
     }
 };
+
+// Lấy trường theo địa chỉ
+const getUniversitiesByAddress = async (req, res) => {
+    const { address } = req.body;
+    try {
+        // Tìm các trường có địa chỉ chứa phần của chuỗi address
+        const universities = await University.findAll({
+            where: {
+                address: {
+                    [Sequelize.Op.like]: `%${address}%`
+                }
+            }
+        });
+
+        if (universities.length > 0) {
+            res.json({ universities });
+        } else {
+            res.status(404).json({ message: 'No universities found for the specified address.' });
+        }
+    } catch (error) {
+        console.error('Error fetching universities by address:', error);
+        res.status(500).json({ message: 'Error fetching universities by address', error: error.message });
+    }
+};
+
+const getUniversitiesByMajor = async (req, res) => {
+    const { majorName } = req.body;
+    try {
+        // Tìm các trường đại học liên quan đến ngành
+        const universities = await University.findAll({
+            include: [{
+                model: Major,
+                where: {
+                    major_name: {
+                        [Sequelize.Op.like]: `%${majorName}%`
+                    }
+                }
+            }]
+        });
+
+        if (universities.length > 0) {
+            res.json({ universities });
+        } else {
+            res.status(404).json({ message: 'No universities found for the specified major.' });
+        }
+    } catch (error) {
+        console.error('Error fetching universities by major:', error);
+        res.status(500).json({ message: 'Error fetching universities by major', error: error.message });
+    }
+};
 module.exports = {
     createUniversity,
     getUniversities,
     deleteUniversity,
     getUniversityImages,
-    getUniversityDetail
+    getUniversityDetail,
+    getUniversitiesByAddress,
+    getUniversitiesByMajor
 }

@@ -1,5 +1,5 @@
 const { Review, Major, University, User } = require('../models');
-require('dotenv').config({ path: '../.env' })
+require('dotenv').config()
 
 const createReview = async (req, res) => {
     const { id } = req.user;

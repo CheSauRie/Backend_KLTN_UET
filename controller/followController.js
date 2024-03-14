@@ -1,5 +1,5 @@
 const { FollowUni, University } = require('../models');
-require('dotenv').config({ path: '../.env' })
+require('dotenv').config()
 
 const followUniversity = async (req, res) => {
     const { id } = req.user;

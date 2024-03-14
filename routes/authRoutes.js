@@ -3,6 +3,7 @@ const express = require('express');
 const authRouter = express.Router();
 const { register, login, emailVerify, requestPasswordReset, resetPassword, changePassword } = require('../controller/authController');
 const { verifyToken } = require('../middleware/authMiddleware');
+const { checkIsVerified } = require('../middleware/checkVerifyAccount');
 
 // Đăng ký
 authRouter.post('/register', register);
