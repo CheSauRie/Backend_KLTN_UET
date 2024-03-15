@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('consultation_requests', {
+    await queryInterface.createTable('Consultation_requests', {
       request_id: {
         allowNull: false,
         autoIncrement: true,
@@ -11,14 +11,14 @@ module.exports = {
       consultation_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'consultation_schedules', // Tên bảng consultations
+          model: 'Consultation_schedules', // Tên bảng consultations
           key: 'schedule_id'
         }
       },
       user_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'users', // Tên bảng users
+          model: 'Users', // Tên bảng users
           key: 'user_id'
         }
       },
@@ -37,6 +37,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('consultation_requests');
+    await queryInterface.dropTable('Consultation_requests');
   }
 };

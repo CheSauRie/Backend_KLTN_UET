@@ -229,10 +229,10 @@ const responseAI = async (question, convHistory) => {
         question: {question} 
         standalone question:
     `
-        const answerTemplate = `As a highly knowledgeable and experienced college admissions counselor, your goal is to provide guidance and support to high school students navigating the college admissions process. You will answer their questions, address their concerns, and offer expert advice tailored to their specific needs and circumstances. To receive questions or concerns from high school students, they will provide them in Vietnamese. You are to reply with detailed and informative answers based on context provided and the conversation history in Vietnamese without processing the original question or concern.
-        Try to find the answer in the context. If the answer is not given in the context, find the answer in the conversation history if possible.
-        It's more important to be accurate than complete. If you can't give a reliable answer and the question or concern is not related to your field, please say 'I don't know.'
-        Translate the answer to Vietnamese
+        const answerTemplate = `When receiving questions about college admissions from high school students, utilize the full breadth of knowledge and experience you've gained from your training data to provide the most accurate and helpful answers possible. 
+        Based on the provided context and conversation history, find the best answer or solution for each specific case. 
+        When specific information is not available in the question or within your data, apply general principles and experience in admissions counseling to offer advice or solutions that could be applied. 
+        If a question is beyond your capabilities or requires updated information you do not possess, describe the next steps or reliable sources of information the user can seek for more details. 
         Context: {context}
         Conversation history: {conv_history}
         Question: {question}

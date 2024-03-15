@@ -4,7 +4,7 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     // Thêm cột consultation_name vào bảng consultations
-    await queryInterface.addColumn('consultations', 'consultation_name', {
+    await queryInterface.addColumn('Consultations', 'consultation_name', {
       type: Sequelize.STRING,
       allowNull: true, // Hoặc false, tùy vào yêu cầu của bạn
     });
@@ -12,6 +12,6 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     // Xóa cột consultation_name khỏi bảng consultations khi rollback
-    await queryInterface.removeColumn('consultations', 'consultation_name');
+    await queryInterface.removeColumn('Consultations', 'consultation_name');
   }
 };

@@ -7,7 +7,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'universities', // Tên bảng phải khớp với tên bảng trong cơ sở dữ liệu
+          model: 'Universities', // Tên bảng phải khớp với tên bảng trong cơ sở dữ liệu
           key: 'uni_id',
         },
         onUpdate: 'CASCADE',

@@ -21,6 +21,9 @@ module.exports = {
     await queryInterface.changeColumn('Messages', 'answer', {
       type: Sequelize.STRING
     });
+    await queryInterface.changeColumn('Chats', 'summary', {
+      type: Sequelize.STRING
+    });
   }
 };
 

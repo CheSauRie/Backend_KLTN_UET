@@ -118,8 +118,8 @@ const requestPasswordReset = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'hongquanvd1@gmail.com', // Địa chỉ email của bạn
-                pass: 'icly rjbv fpdp xgal'      // Mật khẩu ứng dụng của Gmail
+                user: process.env.EMAIL_USERNAME,
+                pass: process.env.EMAIL_PASSWORD
             }
         });
 

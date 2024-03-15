@@ -4,8 +4,9 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "build": "babel src -d build --copy-files",
+    "start": "node build/app.js",
+    "dev": "nodemon --exec babel-node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -30,6 +31,11 @@
     "socket.io": "^4.7.4"
   },
   "devDependencies": {
+    "@babel/cli": "^7.23.9",
+    "@babel/core": "^7.24.0",
+    "@babel/node": "^7.23.9",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/register": "^7.23.7",
     "sequelize-cli": "^6.6.2"
   }
 }

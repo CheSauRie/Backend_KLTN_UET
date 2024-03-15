@@ -26,13 +26,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       },
-      // isVerified: {
-      //   type: DataTypes.BOOLEAN,
-      //   defaultValue: false
-      // },
-      // emailVerificationToken: {
-      //   type: DataTypes.STRING
-      // }
     });
   },
   async down(queryInterface, Sequelize) {

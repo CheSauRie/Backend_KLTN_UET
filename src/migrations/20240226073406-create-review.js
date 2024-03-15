@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('reviews', {
+    await queryInterface.createTable('Reviews', {
       review_id: {
         allowNull: false,
         autoIncrement: true,
@@ -12,7 +12,7 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'users', // Tên bảng users
+          model: 'Users', // Tên bảng users
           key: 'user_id', // Key trong bảng users mà user_id sẽ tham chiếu đến
         },
         onUpdate: 'CASCADE',
@@ -21,7 +21,7 @@ module.exports = {
       major_id: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'majors', // Tên bảng majors
+          model: 'Majors', // Tên bảng majors
           key: 'major_id', // Key trong bảng majors mà major_id sẽ tham chiếu đến
         },
         onUpdate: 'CASCADE',
@@ -45,6 +45,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('reviews');
+    await queryInterface.dropTable('Reviews');
   }
 };

@@ -16,5 +16,14 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.removeColumn('Users', 'role');
+    await queryInterface.addColumn('Universities', 'createdAt', {
+      type: Sequelize.DATE,
+      allowNull: false,
+    });
+
+    await queryInterface.addColumn('Universities', 'updatedAt', {
+      type: Sequelize.DATE,
+      allowNull: false,
+    });
   }
 };
