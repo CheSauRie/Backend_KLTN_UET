@@ -334,6 +334,38 @@ const deleteConsultationSchedule = async (req, res) => {
     }
 };
 
+// Lấy danh sách người dùng dựa trên schedule_id
+const getConsultationRequestsByScheduleId = async (req, res) => {
+    const { schedule_id } = req.params;
+
+    try {
+        const consultationSchedule = await Consultation_Schedule.findOne({
+            where: { schedule_id },
+            include: [{
+                model: ConsultationRequest,
+                attributes: ['user_email', 'username', 'consulting_information'],
+            }]
+        });
+
+        if (!consultationSchedule) {
+            return res.status(404).send("No schedule found with the given schedule_id.");
+        }
+
+        // Format lại dữ liệu consultationRequests
+        const consultationDetails = consultationSchedule.ConsultationRequests.map(consultation => ({
+            userName: consultation.username, // Trường 'username' lấy từ model ConsultationRequest
+            userEmail: consultation.user_email, // Trường 'user_email' lấy từ model ConsultationRequest
+            consultingInformation: consultation.consulting_information, // Trường 'consulting_information' lấy từ model ConsultationRequest
+        }));
+
+        return res.status(200).json(consultationDetails);
+    } catch (error) {
+        console.error("Failed to retrieve consultation requests by schedule_id:", error);
+        return res.status(500).send("An error occurred while retrieving consultation requests.");
+    }
+};
+
+
 
 module.exports = {
     addConsultationSchedule,
@@ -342,5 +374,6 @@ module.exports = {
     updateConsultationSchedule,
     deleteConsultationSchedule,
     getConsultationsByUserId,
-    addConsultationRequest
+    addConsultationRequest,
+    getConsultationRequestsByScheduleId
 }
