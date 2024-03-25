@@ -1,4 +1,5 @@
-const { Consultation_Schedule, User, Major, University, ConsultationRequest } = require('../models');
+const { Consultation_schedules, User, University, Consultation_requests } = require('../models');
+const { updateEnvVariable } = require('../ultis/updateEnvVariables')
 const nodemailer = require('nodemailer');
 require('dotenv').config()
 
@@ -14,6 +15,22 @@ function getConfiguredOAuth2Client() {
     oAuth2Client.setCredentials({
         refresh_token: process.env.REFRESH_TOKEN,
     });
+
+    oAuth2Client.on('tokens', (tokens) => {
+        if (tokens.refresh_token) {
+            // Lưu refresh token mới vào cơ sở dữ liệu hoặc biến môi trường
+            console.log(`New refresh token: ${tokens.refresh_token}`);
+            updateEnvVariable('REFRESH_TOKEN', tokens.refresh_token);
+            // Cập nhật refresh token trong cấu hình
+            oAuth2Client.setCredentials({
+                refresh_token: tokens.refresh_token,
+            });
+        }
+        oAuth2Client.setCredentials({
+            access_token: tokens.access_token,
+        });
+    });
+
     return oAuth2Client;
 }
 
@@ -104,7 +121,7 @@ const addConsultationRequest = async (req, res) => {
     }
 
     try {
-        const newConsultation = await ConsultationRequest.create({
+        const newConsultation = await Consultation_requests.create({
             user_id,
             schedule_id,
             consulting_information,
@@ -112,7 +129,7 @@ const addConsultationRequest = async (req, res) => {
             user_email,
             username,
         });
-        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+        const schedule = await Consultation_schedules.findByPk(schedule_id);
         if (schedule) {
             const timeConsulting = schedule.consultation_time
             const meetUrl = schedule.meet_url
@@ -143,11 +160,11 @@ const addConsultationRequest = async (req, res) => {
 const getConsultationsByUserId = async (req, res) => {
     const { id } = req.user
     try {
-        const consultations = await ConsultationRequest.findAll({
-            where: { user_id: id },
+        const consultations = await Consultation_requests.findAll({
+            where: { user_id: 6 },
             include: [
                 {
-                    model: Consultation_Schedule,
+                    model: Consultation_schedules,
                     attributes: ['schedule_id', 'meet_url', 'consultation_time'],
                     include: [
                         {
@@ -162,6 +179,7 @@ const getConsultationsByUserId = async (req, res) => {
         if (!consultations) {
             return res.status(404).send("Consultations not found.");
         }
+
         const formattedConsultations = consultations.map(consultation => {
             return {
                 schedule_id: consultation.schedule_id,
@@ -169,11 +187,12 @@ const getConsultationsByUserId = async (req, res) => {
                 consultation_phone: consultation.user_phone,
                 consultation_email: consultation.user_email,
                 consultation_name: consultation.user_name,
-                uni_name: consultation.Consultation_Schedule.University.uni_name,
-                consultation_time: consultation.Consultation_Schedule.consultation_time,
-                meet_url: consultation.Consultation_Schedule.meet_url
+                uni_name: consultation.Consultation_schedule.University.uni_name,
+                consultation_time: consultation.Consultation_schedule.consultation_time,
+                meet_url: consultation.Consultation_schedule.meet_url
             };
         });
+
         return res.status(200).json(formattedConsultations);
     } catch (error) {
         console.error("Failed to retrieve consultations:", error);
@@ -199,7 +218,7 @@ const addConsultationSchedule = async (req, res) => {
         const meetUrl = await createGoogleMeet(consultation_time, endTime.toISOString());
 
         // Tạo mới một lịch tư vấn trong bảng consultation_schedules
-        const newSchedule = await Consultation_Schedule.create({
+        const newSchedule = await Consultation_schedules.create({
             uni_id,
             consultation_time,
             meet_url: meetUrl
@@ -218,7 +237,7 @@ const addConsultationSchedule = async (req, res) => {
 // Admin lấy toàn bộ lịch tư vấn
 const getConsultationSchedules = async (req, res) => {
     try {
-        const consultationSchedules = await Consultation_Schedule.findAll({
+        const consultationSchedules = await Consultation_schedules.findAll({
             include: [{
                 model: University,
                 attributes: ['uni_name'], // Lấy chỉ tên trường đại học
@@ -256,7 +275,7 @@ const getConsultationSchedulesByUniCode = async (req, res) => {
         }
 
         // Tìm lịch tư vấn dựa trên uni_id
-        const consultationSchedules = await Consultation_Schedule.findAll({
+        const consultationSchedules = await Consultation_schedules.findAll({
             where: { uni_id: university.uni_id },
             include: [{
                 model: University,
@@ -289,7 +308,7 @@ const updateConsultationSchedule = async (req, res) => {
     const { consultation_time, meet_url } = req.body;
 
     try {
-        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+        const schedule = await Consultation_schedules.findByPk(schedule_id);
 
         if (!schedule) {
             return res.status(404).send("Consultation schedule not found.");
@@ -320,7 +339,7 @@ const updateConsultationSchedule = async (req, res) => {
 const deleteConsultationSchedule = async (req, res) => {
     try {
         const { schedule_id } = req.params;
-        const schedule = await Consultation_Schedule.findByPk(schedule_id);
+        const schedule = await Consultation_schedules.findByPk(schedule_id);
 
         if (!schedule) {
             return res.status(404).send({ message: "Schedule not found." });
@@ -339,10 +358,10 @@ const getConsultationRequestsByScheduleId = async (req, res) => {
     const { schedule_id } = req.params;
 
     try {
-        const consultationSchedule = await Consultation_Schedule.findOne({
+        const consultationSchedule = await Consultation_schedules.findOne({
             where: { schedule_id },
             include: [{
-                model: ConsultationRequest,
+                model: Consultation_requests,
                 attributes: ['user_email', 'username', 'consulting_information'],
             }]
         });
@@ -352,10 +371,10 @@ const getConsultationRequestsByScheduleId = async (req, res) => {
         }
 
         // Format lại dữ liệu consultationRequests
-        const consultationDetails = consultationSchedule.ConsultationRequests.map(consultation => ({
-            userName: consultation.username, // Trường 'username' lấy từ model ConsultationRequest
-            userEmail: consultation.user_email, // Trường 'user_email' lấy từ model ConsultationRequest
-            consultingInformation: consultation.consulting_information, // Trường 'consulting_information' lấy từ model ConsultationRequest
+        const consultationDetails = consultationSchedule.Consultation_requests.map(consultation => ({
+            userName: consultation.username, // Trường 'username' lấy từ model Consultation_requests
+            userEmail: consultation.user_email, // Trường 'user_email' lấy từ model Consultation_requests
+            consultingInformation: consultation.consulting_information, // Trường 'consulting_information' lấy từ model Consultation_requests
         }));
 
         return res.status(200).json(consultationDetails);

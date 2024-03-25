@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Chat, { foreignKey: 'user_id' });
       User.hasMany(models.Review, { foreignKey: 'user_id' })
       User.hasMany(models.FollowUni, { foreignKey: "user_id" })
-      User.hasMany(models.ConsultationRequest, { foreignKey: 'user_id' })
+      User.hasMany(models.Consultation_requests, { foreignKey: 'user_id' })
     }
   }
   User.init({

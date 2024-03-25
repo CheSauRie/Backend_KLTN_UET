@@ -3,18 +3,18 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class ConsultationRequest extends Model {
+  class Consultation_requests extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ConsultationRequest.belongsTo(models.User, { foreignKey: 'user_id' })
-      ConsultationRequest.belongsTo(models.Consultation_Schedule, { foreignKey: 'schedule_id' })
+      Consultation_requests.belongsTo(models.User, { foreignKey: 'user_id' })
+      Consultation_requests.belongsTo(models.Consultation_schedules, { foreignKey: 'schedule_id' })
     }
   }
-  ConsultationRequest.init({
+  Consultation_requests.init({
     request_id: {
       allowNull: false,
       autoIncrement: true,
@@ -29,9 +29,8 @@ module.exports = (sequelize, DataTypes) => {
     consulting_information: DataTypes.TEXT
   }, {
     sequelize,
-    modelName: 'ConsultationRequest',
-    tableName: 'consultation_requests',
+    modelName: 'Consultation_requests',
     timestamps: false
   });
-  return ConsultationRequest;
+  return Consultation_requests;
 };
